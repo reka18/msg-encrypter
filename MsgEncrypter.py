@@ -1,5 +1,6 @@
 import random
 
+
 class RsaKeys(object):
     '''
     A class implementation of the RSA key
@@ -40,8 +41,8 @@ class RsaKeys(object):
         '''
         n = self.p * self.q
         # this makes sure e starts out as a random integer
-        # from 1 to half the product of p and q. From there
-        # this loop iterates up to the product of p and q - 1
+        # from 1 to the floor half the product of p and q. From there
+        # this loop iterates up to the product of (p and q) - 1
         # until it finds the first value for e that is coprime
         # to the totient of p and q.
         for e in range(random.randint(1, n // 2), n - 1):
@@ -55,7 +56,9 @@ class RsaKeys(object):
         and returns their modular inverse.
         '''
         e, _ = self.pubkey
-        d = self._modinv(e, self.phi)
+        d = self._egcd(e) % self.phi
+        if d < 0:
+            d += self.phi
         return d
 
     def _gcd(self, b, m):
@@ -69,18 +72,21 @@ class RsaKeys(object):
             b, m = m, b % m
         return b
 
-    def _modinv(self, b, m):
+    def _egcd(self, e):
         '''
         Helper function to compute the
         modular inverse of e and phi. Takes
         arguments b and m.
         '''
-        result = False
-        for i in range(1, m):
-            a = (i * b) % m
-            if a == 1:
-                result = i
-        return result
+        a, b = e, self.phi
+        x, x0 = 0, 1
+        y, y0 = 1, 0
+        while b > 0:
+            q = a // b
+            a, b = b, a % b
+            x, x0 = x0 - q * x, x
+            y, y0 = y0 - q * y, y
+        return x0
 
     def Keys(self):
         '''
@@ -173,35 +179,34 @@ class Crack(object):
     def __init__(self, e, n):
         self.e, self.n = e, n
 
-    def _brute_force(self):
+    def brute_force(self):
         # n is a number, return the smallest factor of n
         for i in range(2, self.n - 1):
             if self.n % i == 0:
                 return i, self.n // i
         return False
 
-    def generate_d(self):
-        p, q = self._brute_force()
-        d = self._modinv(self.e, self._find_phi(p, q))
-        return d, (p, q)
-
-    def _find_phi(self, p, q):
+    def crack_d(self):
+        p, q = self.brute_force()
         phi = (p - 1) * (q - 1)
-        assert phi > 127
-        return phi
-
-    def _modinv(self, b, m):
-        result = False
-        for i in range(1, m):
-            a = (i * b) % m
-            if a == 1:
-                result = i
-        return result
+        a, b = self.e, phi
+        x, x0 = 0, 1
+        y, y0 = 1, 0
+        while b > 0:
+            q = a // b
+            a, b = b, a % b
+            x, x0 = x0 - q * x, x
+            y, y0 = y0 - q * y, y
+            d = x0 % phi
+            if d < 0:
+                d += phi
+        return d, (p, q)
 
 
 def select_encrypt():
     try:
-        e, n = input('Enter public key for encryption:\n').strip('(,)').split(',')
+        e, n = input('Enter public key for encryption:\n').strip(
+            '(,)').split(',')
         pubkey = int(e), int(n)
         msg = str(input('Enter a message for encryption:\n'))
         C = Encryption().encode(msg, pubkey)
@@ -211,6 +216,7 @@ def select_encrypt():
     except:
         print('Exiting...')
         return
+
 
 def select_decrypt():
     try:
@@ -227,9 +233,11 @@ def select_decrypt():
         print('Exiting')
         return
 
+
 def select_key():
     try:
-        p, q = int(input('Press enter to use default primes or...\nenter your first prime.\n')), int(input('Enter your second prime.\n'))
+        p, q = int(input('Press enter to use default primes or...\nenter your first prime.\n')), int(
+            input('Enter your second prime.\n'))
     except:
         p, q = 0, 0
     if (p and q) == 0:
@@ -246,17 +254,20 @@ def select_key():
         print('WARNING! Loss of Private Key will render encrypted messages unretreivable!')
         run_again()
 
+
 def select_break():
     try:
         pubkey = input('Enter public key:\n').strip('(,)').split(', ')
         e, n = pubkey
         e, n = int(e), int(n)
-        privkey, primes = Crack(e, n).generate_d()
-        print('The private key is {} and the constructor primes are {}'.format(privkey, primes))
+        privkey, primes = Crack(e, n).crack_d()
+        print('The private key is {} and the constructor primes are {}'.format(
+            privkey, primes))
     except:
         print('Exiting...')
         return
     run_again()
+
 
 def run_again():
     back = str(input('\nDo you wish to return to main menu or exit? (r/x) '))
@@ -268,8 +279,10 @@ def run_again():
         print('Exiting...')
         return
 
+
 def selector():
-    selection = str(input('Encrypt a message, decrypt a message, generate a keypair, or try to break a pubkey? (e/d/k/b): ')).lower()
+    selection = str(input(
+        'Encrypt a message, decrypt a message, generate a keypair, or try to break a pubkey? (e/d/k/b): ')).lower()
     while selection not in 'edkb':
         selection = str(input('Invalid entry. Choose from (e/d/k/b): '))
     if selection == 'e':
@@ -285,6 +298,5 @@ def selector():
 def main():
     selector()
 
-
-if __name__ == '__main__':
+if __name__ is '__main__':
     main()
