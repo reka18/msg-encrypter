@@ -152,7 +152,7 @@ class Encryption(object):
         return [self._fme(M, e, n) for M in data]
 
     def decode(self, data, pubkey, privkey):
-        e, n = pubkey
+        _, n = pubkey
         d = privkey
         data = [self._fme(C, d, n) for C in data]
         return ProcessMessage(data).string
@@ -241,7 +241,7 @@ def select_key():
     except:
         p, q = 0, 0
     if (p and q) == 0:
-        print('Using default primes... will take approx 30 sec for a stronger key.')
+        print('Using default primes...')
         key = RsaKeys().Keys()
         print('Your Public Key is:', key[0])
         print('Your Private Key is:', key[1])
@@ -300,3 +300,5 @@ def main():
 
 if __name__ is '__main__':
     main()
+
+main()
