@@ -214,7 +214,7 @@ def select_encrypt():
         print(pubkey, C)
         run_again()
     except:
-        print('Exiting...')
+        print('\nExiting...')
         return
 
 
@@ -230,7 +230,7 @@ def select_decrypt():
         print(M)
         run_again()
     except:
-        print('Exiting')
+        print('\nExiting')
         return
 
 
@@ -264,7 +264,7 @@ def select_break():
         print('The private key is {} and the constructor primes are {}'.format(
             privkey, primes))
     except:
-        print('Exiting...')
+        print('\nExiting...')
         return
     run_again()
 
@@ -276,7 +276,7 @@ def run_again():
     if back == 'r':
         selector()
     else:
-        print('Exiting...')
+        print('\nExiting...')
         return
 
 
@@ -300,3 +300,5 @@ def main():
 
 if __name__ is '__main__':
     main()
+
+main()
